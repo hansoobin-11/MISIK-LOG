@@ -15,8 +15,8 @@ public class WebConfig {
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
                 //주석 풀면 로컬호스트로 접속가능
-//                        .allowedOrigins("http://localhost:5173")
-                        .allowedOrigins("http://192.168.20.12:5173")
+                        .allowedOrigins("http://localhost:5173")
+//                        .allowedOrigins("http://192.168.20.12:5173")
                         .allowedMethods("*")
                         .allowedHeaders("*")
                         .allowCredentials(true)
