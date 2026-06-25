@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="placeGroup">
+  <select id="sequence" resultType="long">
+  	select place_group_seq.nextval from dual
+  </select>
+  
+  <insert id="insert">
+  	insert into place_group(
+  		place_group_id, place_group_name, 
+  		parent_group_id
+  	) 
+  	values(
+  		#{placeGroupId}, #{placeGroupName}, 
+  		#{parentGroupId}
+  	)
+  </insert>
+  
+  <select id="list" resultType="PlaceGroupDto">
+  	select * from place_group order by place_group_id desc
+  </select>
+  
+  <select id="selectByName" resultType="PlaceGroupDto">
+  	select * from place_group where place_group_name = #{depth1}
+  </select>
+  
+  <select id="findParentGroupId" resultType="long">
+  	select parent_group_id
+  	from place_group
+  	where place_group_id = #{placeGroupId}
+  </select>
+</mapper>

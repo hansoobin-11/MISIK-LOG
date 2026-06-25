@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="member">
+
+	<!-- 등록 (C)-->
+	<!-- #은 동적 바인딩 홀더 내가 뭐 신경 안써도 알아서 안의 값을 처리해준다 -->
+	<insert id="insert">
+		insert into member(
+			member_id, member_pw, member_nickname, 
+			member_birth, member_contact, member_email,
+			member_post, member_address1, member_address2
+		)
+		values(
+			#{memberId}, #{memberPw}, #{memberNickname}, 
+			#{memberBirth},  #{memberContact}, #{memberEmail},
+			#{memberPost}, #{memberAddress1}, #{memberAddress2}
+		)
+	</insert>
+	<!-- 상세 조회(R) -->
+	<select id = "detail" resultType ="memberDto">
+		select * from member where member_id = #{memberId}
+	</select>
+	
+	<select id = "detailBymemberNickname" resultType = "memberDto">
+		select * from member where member_nickname = #{memberNickname}
+	</select>
+
+
+<!-- 	mybatis에서는 정적 배치는 $ 동적 배치는 #을 사용 -->
+	<select id="search" resultType="memberDto">
+		select * from member 
+		where 
+			member_status = 'active'
+			and
+			instr(${column}, #{keyword}) > 0
+			and
+			member_level != '관리자'
+		order by ${column} asc , member_id asc
+					
+	</select>
+	
+	<!-- 
+		복합 검색(Complex Search) 
+		- 테이블 컬럼의 모든 요소를 활용한 검색
+		- 문자열, 숫자, 날짜 , 일치, 유사, 구간 등 다양한 처리가 가능하게 구현
+		- 컬럼이 있어도 되고 없어도 되도록 조건부 처리
+	-->
+	<select id="complexSearch" resultType="MemberComplexSearchVO">
+		select * from member
+		<!-- 
+			where절이 조건부로 존재할 때 사용하는 태그 
+			- 내부에 작성된 and 구문은 상황에 맞게 알아서 제거됨
+			- 즉, 내부의 조건구문은 and 또는 or로 시작해야함 (대부분 and로 시작)
+		-->
+		<where>
+			<!-- 아이디 : 유사검색 -->
+			<if test="memberId != null">
+			and instr(member_id, #{memberId}) > 0
+			</if>
+			<!-- 닉네임 : 유사검색 -->
+			<if test="memberNickname != null">
+			and instr(member_nickname, #{memberNickname}) > 0
+			</if>
+			<!-- 이메일 : 유사검색 -->
+			<if test="memberEmail != null">
+			and instr(member_email, #{memberEmail}) > 0
+			</if>
+			<!-- 전화번호 : 유사검색(시작) -->
+			<if test="memberContact != null">
+			and member_contact like #{memberContact} || '%'
+<!-- 			and member_contact like concat()#{memberContact}, '%') -->
+			</if>
+			<!-- 생년월일 : 일치검색 -->
+			<if test="memberBirth != null">
+			and member_birth = #{memberBirth}
+			</if>
+			
+			<!-- 가입일: 구간 검색 -->
+			<choose>
+				<when test="beginMemberJoin != null and endMemberJoin != null">
+					and member_join between 
+						to_timestamp(#{beginmemberJoin} || '00:00:00.000', 'yyyy-mm-dd hh24:mi:ss.ff3') 
+						and 
+						to_timestamp(#{endmemberJoin} || '23:59:59.999', 'yyyy-mm-dd hh24:mi:ss.ff3')
+				</when>
+				<when test="beginMemberJoin != null">
+					<![CDATA[
+						and member_join >= to_timestamp(#{beginmemberJoin} || '00:00:00.000', 'yyyy-mm-dd hh24:mi:ss.ff3') 
+					]]> 
+				</when>
+				<when test="endMemberJoin != null">
+					<![CDATA[
+						and member_join <= to_timestamp(#{endmemberJoin} || '23:59:59.999', 'yyyy-mm-dd hh24:mi:ss.ff3')
+					]]> 
+				</when>			
+			</choose>
+			
+			<!-- 원하는 등급을 검색 -->
+			<if test="memberLevelList != null and memberLevelList.size() > 0">
+				<!-- item(변수명), collection(저장소), separator(구분자) -->
+				<foreach item="memberLevel" collection="memberLevelList"
+								separator="," open="and member_level in (" close=")">
+					#{memberLevel}
+				</foreach>
+			</if>
+			
+			<!-- 주소 토큰으로 검색 -->
+<!-- 			<if test="addressTokenList != null and addressTokenList.length > 0"> -->
+			<if test="addressTokenList != null and addressTokenList.size() > 0">
+				and 
+				<foreach collection="addressTokenList" item="token" 
+						separator="and" open="(" close=")">
+					instr(member_address1, #{token}) > 0
+				</foreach>
+			</if>
+			
+			<!-- 원하는 등급을 검색 -->
+			<if test="memberStatusList != null and memberStatusList.size() > 0">
+				<!-- item(변수명), collection(저장소), separator(구분자) -->
+				<foreach item="memberStatus" collection="memberStatusList"
+								separator="," open="and member_status in (" close=")">
+					#{memberStatus}
+				</foreach>
+			</if>			
+			
+		</where>
+	</select>	
+	
+<update id="updateMember">
+ 	 	UPDATE member
+  	 	<set>
+  	 		<if test="memberPw != null">
+	 	 		member_pw = #{memberPw}
+  	 		</if>
+  	 		<if test="memberNickname != null">
+ 		 		, member_nickname = #{memberNickname}
+  	 		</if>
+  	 		<if test="memberBirth != null">
+	 	 		, member_birth = #{memberBirth}
+  	 		</if>
+  	 		<if test="memberContact != null">
+	 	 		, member_contact = #{memberContact}
+  	 		</if>
+  	 		<if test="memberEmail != null">
+	 	 		, member_email = #{memberEmail}
+  	 		</if>
+  	 		<if test="memberLevel != null">
+	 	 		, member_level = #{memberLevel}
+  	 		</if>
+  	 		<if test="memberPost != null">
+	 	 		, member_post = #{memberPost}
+  	 		</if>
+<!--   	 		, member_post = #{memberPost} -->
+  	 		<if test="memberAddress1 != null">
+	 	 		, member_address1 = #{memberAddress1}
+  	 		</if>
+<!--   	 		, member_address1 = #{memberAddress1} -->
+  	 		<if test="memberAddress2 != null">
+	 	 		, member_address2 = #{memberAddress2}
+  	 		</if>
+<!--   	 		, member_address2 = #{memberAddress2} -->
+  	 		<if test="memberJoin != null">
+	 	 		, member_join = #{memberJoin}
+  	 		</if>
+  	 		<if test="memberStatus != null">
+	 	 		, member_status = #{memberStatus}
+  	 		</if>
+  	 	</set>
+ 	 	WHERE member_id = #{memberId}
+ 	 </update>
+	
+	
+	<insert id="insertWithLevel">
+		insert into member(
+			member_id, member_pw, member_nickname, 
+			member_birth, member_contact, member_email,
+			member_post, member_address1, member_address2,
+			member_level
+		)
+		values(
+			#{memberId}, #{memberPw}, #{memberNickname}, 
+			#{memberBirth},  #{memberContact}, #{memberEmail},
+			#{memberPost}, #{memberAddress1}, #{memberAddress2},
+			#{memberLevel}
+		)
+	</insert>
+	
+	
+	<update id="updateLoginTime">
+		update member set member_login=systimestamp where member_id=#{memberId}
+	</update>
+
+	<update id="updateChangeTime">
+		update member set member_change=systimestamp where member_id=#{memberId}
+	</update>
+	
+	<update id="updateWithdraw">
+		update member 
+		set 
+			member_withdraw_time=systimestamp, 
+			member_status='DORMANT' 
+		where member_id=#{memberId}
+	</update>
+
+	<!-- 회원 재 활성화 -->
+	<!-- 관리자가 써야되는 기능 -->
+	<update id="updateReactivate">
+		update member 
+		set 
+			member_withdraw_time=null, 
+			member_status='ACTIVE' 
+		where member_id=#{memberId}
+	</update>
+	
+	<select id="findMember" resultType="memberDto">
+		select
+			member_nickname,
+			member_birth,
+			member_contact,
+			member_email,
+			member_post,
+			member_address1,
+			member_address2,
+			member_status,
+			member_level
+		from
+		member
+		where member_id=#{memberId}
+		<!--AND member_status = 'ACTIVE'-->
+	</select>
+	
+	<!-- 삭제 구문 -->
+	<delete id="delete">
+		delete from member where member_id = #{member_id}
+	</delete>
+	
+	<!-- 삭제 대상 조회 + 시간 조회 -->
+	<select id="findDormantMember" resultType="memberDto">
+		select
+			member_id
+			,MEMBER_WITHDRAW_TIME
+		from
+		member
+		where member_status='DORMANT'
+	</select>
+	
+	
+	<!-- 삭제된 대상 찾아서 로그인 방지 -->
+	<select id="blockDormant" resultType="memberDto">
+		select
+			member_status
+		 from
+		 	member
+		where 
+			member_id=#{member_id}
+	</select>
+
+	<!--관리자 제외한 회원 세기 -->
+	<select id="notAdminListCount" resultType="int">
+		select count(*) from member
+		where member_level in ('일반회원', '자영업자')
+	</select>
+
+	<!-- 관리자 제외한 회원 리스트 조회 -->
+	<select id="notAdminLIst" resultType="MemberDto">
+		select * from (
+			select rownum rn, TMP.* from(
+				select * from member
+				where member_level in ('일반회원', '자영업자')
+				order by member_id asc
+			) TMP
+		) where rn between #{begin} and #{end}	
+	</select>
+
+</mapper>

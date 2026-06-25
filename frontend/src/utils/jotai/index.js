@@ -1,0 +1,88 @@
+import { atom } from "jotai";
+import { atomWithStorage } from "jotai/utils";
+
+// export const loginIdState = atom({ key : "loginIdState", default : null }); --- recoil
+// export const loginIdState = atom(null); //jotai
+// export const loginIdState = atomWithStorage(저장소 key 이름, 초기값, 저장소 종류);
+export const loginIdState = atomWithStorage("loginIdState", "", sessionStorage);
+
+// export const loginLevelState = atom({ key : "loginLevelState", default : null }); --- recoil
+// export const loginLevelState = atom(null); //jotai
+export const loginLevelState = atomWithStorage("loginLevelState", "", sessionStorage); //jotai + persist
+
+//accessToken
+export const accessTokenState = atomWithStorage("accessTokenState", "", sessionStorage);
+
+//refreshToken
+export const refreshTokenState = atomWithStorage("refreshTokenState", 0, sessionStorage);
+// export const loginState = selector({
+//     key : "loginState",
+//     get: (state) => {
+//         const loginId = state.get(loginIdState);
+//         const loginLevel = state.get(loginLevelState);
+//         return loginId !== null && loginLevel !== null;
+//     }
+// }); --- recoil
+
+//사진 관련 기능 jotai에 추가(251218 추가됨)
+// export const attachmentProfileAtomState = atomWithStorage('attachmentNo', 0, sessionStorage);
+
+export const loginState = atom(get => {
+    const loginId = get(loginIdState);
+    const loginLevel = get(loginLevelState);
+
+    //값이 존재하면 정상적으로 반환, 없으면 undefined
+    //if(loginId !== undefined) return loginId.length > 0;
+    //if(loginLevel !== undefined) retrun loginLevel.length > 0;
+    return loginId?.length > 0 && loginLevel?.length > 0;
+}); //jotai
+
+export const adminState = atom(get => {
+    const loginId = get(loginIdState);
+    const loginLevel = get(loginLevelState);
+    return loginId?.length > 0 && loginLevel === "관리자";
+});
+
+export const ownerState = atom(get => {
+    const loginId = get(loginIdState);
+    const loginLevel = get(loginLevelState);
+    return loginId?.length > 0 && loginLevel === "자영업자";
+});
+//로그인 판정이 완료되었는지 확인하기 위한 데이터
+export const loginCompleteState = atom(false);
+
+//로그인 관련 state를 초기화하는 함수 (쓰기 함수)
+//문법 - const 변수명 = atom(null, 변경함수);
+export const clearLoginState = atom(
+    null, //읽는 건 필요없고 
+    (get, set) => { //변경만 하겠다
+        set(loginIdState, "");
+        set(loginLevelState, "");
+        set(accessTokenState, "");
+        set(refreshTokenState, "");
+        set(attachmentProfileAtomState, 0);
+    });
+
+// 1. 순수하게 번호만 저장 (localStorage 연동)
+export const attachmentProfileAtomState = atomWithStorage("profileNo", 0, sessionStorage);
+
+// 2. 번호를 기반으로 URL을 계산 (읽기 전용 아톰)
+export const profileImageUrlAtom = atom((get) => {
+    const no = get(attachmentProfileAtomState);
+    if (!no) {
+        return "https://dummyimage.com/300X300/a6a6a6/fff.png&text=no+profile";
+    }
+    return `http://localhost:8080/attachment/${no}?t=${new Date().getTime()}`;
+});
+
+
+//DevTools에서 확인하기 위한 이름 설정
+loginIdState.debugLabel = "loginIdState";
+loginLevelState.debugLabel = "loginLevelState";
+loginState.debugLabel = "loginState";
+adminState.debugLabel = "adminState";
+accessTokenState.debugLabel = "accessTokenState";
+refreshTokenState.debugLabel = "refreshTokenState";
+loginCompleteState.debugLabel = "loginCompleteState";
+attachmentProfileAtomState.debugLabel = "attachmentProfileAtomState";
+profileImageUrlAtom.debugLabel = "profileImageAddress";

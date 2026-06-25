@@ -1,0 +1,375 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="restaurant">
+
+    <select id="sequence" resultType="long">
+        select restaurant_seq.nextval from dual
+    </select>
+
+    <!-- C -->
+    <insert id="insert">
+        insert into restaurant(
+            restaurant_id, owner_id, restaurant_place, restaurant_name, restaurant_open,
+            restaurant_close, restaurant_break_start, restaurant_break_end,
+            restaurant_contact, restaurant_address, restaurant_address_x, restaurant_address_y, restaurant_description,
+            restaurant_opening_days, restaurant_last_order, reservation_interval, restaurant_reservation_price
+        ) values (
+            #{restaurantId}, #{ownerId}, #{restaurantPlace}, #{restaurantName}, 
+            #{restaurantOpen}, #{restaurantClose}, #{restaurantBreakStart}, 
+            #{restaurantBreakEnd}, #{restaurantContact}, 
+            #{restaurantAddress}, #{restaurantAddressX}, #{restaurantAddressY}, 
+            #{restaurantDescription}, #{restaurantOpeningDays}, #{restaurantLastOrder}, 
+            <if test="reservationInterval != null">#{reservationInterval}, </if>
+        	<if test="reservationInterval == null">DEFAULT, </if>
+            <if test="restaurantReservationPrice != null">#{restaurantReservationPrice}</if>
+        	<if test="restaurantReservationPrice == null">DEFAULT</if>
+        )
+    </insert>
+
+    <!-- R(전체) -->
+    <select id="list" resultType="RestaurantDto">
+        select * from restaurant
+        order by restaurant_id desc
+    </select>
+	
+	<!-- 승인 대기 식당 리스트 조회(관리자) -->
+	<select id="listNeedApprove" resultType="RestaurantDto">
+		select * from (
+			select rownum rn, TMP.* from (
+				select * from restaurant
+				where restaurant_status = 'N' 
+				order by restaurant_id asc
+			)TMP 
+		) where rn between #{begin} and #{end}
+	</select>
+	
+	<!-- 승인 대기 식당 상세 -->
+	<select id="detailNeedApprove" resultType="RestaurantDto">
+		select * from restaurant 
+		where restaurant_id = #{restaurantId}
+		and restaurant_status = 'N'
+	</select>
+	
+    <!-- 상세(데이터 조회용) -->
+    <select id="detail" resultType="RestaurantDto">
+	    select *
+	    from restaurant
+	    where restaurant_id = #{restaurantId}
+	</select>
+	
+	<!-- 상세(출력용) -->
+	<select id="detailWithCategory" resultType="RestaurantDetailVO">
+		SELECT 
+        r.*,
+		rh.holiday_dates,
+    	rh.place_depth1,
+	    rh.place_depth2,
+	    rh.place_depth3,
+	    rh.place_group_id,
+	    rh.place_group_name,
+	    rh.category_no,
+	    rh.category_name,
+	    rh.restaurant_avg_rating,
+	    rh.review_count,
+	    rh.restaurant_max_people
+	    from restaurant r left outer join restaurant_full_list rh 
+	    on r.restaurant_id = rh.restaurant_id where r.restaurant_id = #{restaurantId} 
+		and rownum = 1
+	</select>
+	
+	<!-- 식당 주인용 조회 -->
+	<select id="myRestaurantList" resultType="RestaurantDto">
+    select *
+    	from restaurant
+    where owner_id = #{ownerId}
+    order by restaurant_id desc
+	</select>
+	
+	<!-- 승인 대기 중인 식당 목록 -->
+	<select id="pendingFormList" resultType="RestaurantDto">
+    	select *
+    	from restaurant
+    	where owner_id = #{ownerId}
+    	order by restaurant_id desc
+	</select>
+	
+	 <select id="pendingFormDetail" parameterType="map" resultType="RestaurantDto">
+    select
+        restaurant_id,
+        owner_id,
+        restaurant_name,
+        restaurant_contact,
+        restaurant_address,
+        restaurant_address_x,
+        restaurant_address_y,
+
+        restaurant_open,
+        restaurant_close,
+        restaurant_break_start,
+        restaurant_break_end,
+        restaurant_last_order,
+
+        restaurant_opening_days,
+        reservation_interval,
+        restaurant_reservation_price,
+
+        restaurant_description
+    from restaurant
+    where restaurant_id = #{restaurantId}
+      and owner_id = #{ownerId}
+	</select>
+	
+	<!-- 식당 올린 사람 Id 조회 -->
+	<select id="selectFormListByOwnerId" parameterType="string" resultType="RestaurantDto">
+    select *
+    from restaurant
+    where owner_id = #{ownerId}
+    order by restaurant_id desc
+	</select>
+	
+	<update id="updateUnitForm">
+    update restaurant
+    <set>
+        <if test="restaurantName != null">
+            restaurant_name = #{restaurantName},
+        </if>
+
+        <if test="restaurantContact != null">
+            restaurant_contact = #{restaurantContact},
+        </if>
+
+        <if test="restaurantOpen != null">
+            restaurant_open = #{restaurantOpen},
+        </if>
+
+        <if test="restaurantClose != null">
+            restaurant_close = #{restaurantClose},
+        </if>
+
+        <if test="restaurantBreakStart != null">
+            restaurant_break_start = #{restaurantBreakStart},
+        </if>
+
+        <if test="restaurantBreakEnd != null">
+            restaurant_break_end = #{restaurantBreakEnd},
+        </if>
+
+        <if test="restaurantDescription != null">
+            restaurant_description = #{restaurantDescription},
+        </if>
+
+        <if test="restaurantLastOrder != null">
+            restaurant_last_order = #{restaurantLastOrder},
+        </if>
+
+        <if test="restaurantOpeningDays != null">
+            restaurant_opening_days = #{restaurantOpeningDays},
+        </if>
+        
+        <if test="restaurantReservationPrice != null">
+            restaurant_reservation_price = #{restaurantReservationPrice},
+        </if>
+
+        <if test="reservationInterval != null">
+            reservation_interval = #{reservationInterval}
+        </if>
+    </set>
+    	where restaurant_id = #{restaurantId}
+	</update>
+
+	
+	<!-- 주소 수정(식당 주인) -->
+	<update id="updateAddressForm">
+		update restaurant set 
+		restaurant_place = #{restaurantPlace},
+		restaurant_address = #{restaurantAddress},
+		restaurant_address_x = #{restaurantAddressX},
+		restaurant_address_y = #{restaurantAddressY}
+		where restaurant_id = #{restaurantId}
+	</update>
+	
+	<!-- 식당 등록 승인 -->
+	<update id="approveByAdmin">
+		update restaurant set restaurant_status = 'Y' 
+		where restaurant_id = #{restaurantId}
+	</update>
+	
+	<!-- 주소 수정 -->
+	<update id="updateAddressByAdmin">
+		update restaurant set 
+		restaurant_place = #{restaurantPlace},
+		restaurant_address = #{restaurantAddress},
+		restaurant_address_x = #{restaurantAddressX},
+		restaurant_address_y = #{restaurantAddressY}
+		where restaurant_id = #{restaurantId}
+	</update>
+	
+    <!-- U(부분 수정 - 가능한 것만) -->
+    <update id="updateUnitByAdmin">
+        update restaurant 
+        <set>
+            <if test="ownerId != null"> owner_id = #{ownerId}, </if>
+            <if test="restaurantName != null"> restaurant_name = #{restaurantName}, </if>
+            <if test="restaurantOpen != null"> restaurant_open = #{restaurantOpen}, </if>
+            <if test="restaurantClose != null"> restaurant_close = #{restaurantClose}, </if>
+            <if test="restaurantBreakStart != null"> restaurant_break_start = #{restaurantBreakStart}, </if>
+            <if test="restaurantBreakEnd != null"> restaurant_break_end = #{restaurantBreakEnd}, </if>
+            <if test="reservationInterval != null"> reservation_interval = #{reservationInterval}, </if>
+            <if test="restaurantContact != null"> restaurant_contact = #{restaurantContact}, </if>
+            <if test="restaurantDescription != null"> restaurant_description = #{restaurantDescription}, </if>
+            <if test="restaurantLastOrder != null"> restaurant_last_order = #{restaurantLastOrder}, </if>
+            <if test="restaurantOpeningDays != null"> restaurant_opening_days = #{restaurantOpeningDays}, </if>
+            <if test="restaurantStatus != null"> restaurant_status = #{restaurantStatus}, </if>
+        </set>
+        where restaurant_id = #{restaurantId}
+    </update>
+
+    <update id="deleteByAdmin">
+        update restaurant 
+        restaurant_operation_status = #{restaurantOperationStatus}
+    </update>
+    
+    <!-- 검색 -->
+    <select id="searchList" parameterType="SearchVO" resultType="RestaurantListVO">
+
+    select * from (
+    select
+        restaurant_id as restaurantId,
+        restaurant_name as restaurantName,
+        restaurant_address as restaurantAddress,
+        restaurant_open as restaurantOpen,
+        restaurant_close as restaurantClose,
+        restaurant_last_order as restaurantLastOrder,
+        restaurant_opening_days as restaurantOpeningDays,
+        holiday_dates as holidayDates,
+
+        restaurant_avg_rating as restaurantAvgRating,
+        review_count as reviewCount,
+        restaurant_max_people as restaurantMaxPeople,
+
+        place_id as placeId,
+        place_depth1 as placeDepth1,
+        place_depth2 as placeDepth2,
+        place_depth3 as placeDepth3,
+        place_group_id as placeGroupId,
+        place_group_name as placeGroupName,
+
+        category_no as categoryNo,
+        category_name as categoryName,
+
+        row_number() over (
+            partition by restaurant_id
+            order by restaurant_id
+        ) as rowNumber
+    from restaurant_full_list
+    where 1 = 1
+
+	<if test="keyword != null and keyword != ''">
+        and (
+            restaurant_name like '%' || #{keyword} || '%'
+            or restaurant_address like '%' || #{keyword} || '%'
+            or place_depth1 like '%' || #{keyword} || '%'
+            or place_depth2 like '%' || #{keyword} || '%'
+            or place_depth3 like '%' || #{keyword} || '%'
+            or category_name like '%' || #{keyword} || '%'
+
+            <!-- 상위 카테고리 → 하위 카테고리 검색 -->
+         or category_no in (
+    		select child_category.category_no
+    		from category top_category
+    		join category child_category
+      			on child_category.parent_category_no = top_category.category_no
+		    where top_category.category_name like '%' || #{keyword} || '%'		
+			)   
+        )
+    </if>
+
+    <if test="placeGroupId != null">
+        and place_group_id = #{placeGroupId}
+    </if>
+
+    <if test="categoryId != null">
+        and category_no = #{categoryId}
+    </if>
+
+	)
+	where rowNumber = 1
+	order by restaurantId desc
+	</select>
+    
+    
+		<!-- 식당 프로필 설정 -->
+  	<insert id="connect">
+  		insert into restaurant_profile values (#{restaurantId}, #{attachmentNo})
+  	</insert>
+  	
+  	<!-- 식당 번호로 첨부파일 반환 -->
+  	<select id="findProfile" resultType="int">
+  		select attachment_no from restaurant_profile where restaurant_id = #{restaurantId}
+  	</select>
+  	
+	<!-- 카테고리/지역 그룹 합쳐서 조회(정렬 기본) + 페이지적용 -->
+	<select id="listWithCategory" resultType="RestaurantListVO">
+		SELECT * FROM (
+		    SELECT rownum AS rn, TMP.*
+		    FROM (
+		        SELECT *
+		        FROM (
+		            SELECT rl.*,
+		                   ROW_NUMBER() OVER (
+		                       PARTITION BY restaurant_id 
+		                       ORDER BY restaurant_id
+		                   ) AS dup_rn
+		            FROM restaurant_full_list rl
+		        ) t
+		        WHERE t.dup_rn = 1
+		        ORDER BY restaurant_id
+		    ) TMP
+		) 
+		WHERE rn BETWEEN #{begin} AND #{end}
+	</select> 
+	
+	<select id="ownerDetail" resultType="RestaurantOwnerDetailVO">
+    select
+        restaurant_id,
+        restaurant_name,
+        restaurant_contact,
+        restaurant_address,
+        restaurant_address_x,
+        restaurant_address_y,
+        restaurant_description,
+        restaurant_open,
+        restaurant_close,
+        restaurant_break_start,
+        restaurant_break_end,
+        restaurant_last_order,
+        restaurant_opening_days,
+        reservation_interval,
+        restaurant_reservation_price
+    from restaurant
+    where restaurant_id = #{restaurantId}
+</select>
+	
+	<select id="listCount" resultType="int">
+		SELECT COUNT(*)
+			FROM (
+    			SELECT rl.*, ROW_NUMBER() OVER 
+    			(PARTITION BY restaurant_id ORDER BY restaurant_id) AS rn
+    		FROM restaurant_full_list rl
+		) t
+		WHERE t.rn = 1
+	</select>
+	
+	<select id="approvalListCount" resultType="int">
+		select count(*) from restaurant where restaurant_status = 'N'
+	</select>
+	
+	<!-- 별점 평균 수정 -->
+	<update id="updateReviewAvg">
+		update restaurant set 
+		restaurant_avg_rating = #{restaurantAvgRating}
+		where restaurant_id = #{restaurantId}
+	</update>
+</mapper>

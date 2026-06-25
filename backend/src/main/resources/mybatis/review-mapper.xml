@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="review">
+
+	<!-- 등록 -->
+	<insert id="insert" useGeneratedKeys="true" keyProperty="reviewNo">
+    <selectKey keyProperty="reviewNo" resultType="int" order="BEFORE">
+        SELECT review_seq.NEXTVAL FROM dual
+    </selectKey>
+	    INSERT INTO review(
+	        review_no, review_content, review_rating,
+	        restaurant_id, member_id, review_created_at, 
+	        review_attachment_no
+	    ) VALUES (
+	        #{reviewNo}, #{reviewContent},
+	        #{reviewRating}, 
+	        #{restaurantId}, 
+	        #{memberId}, 
+	        systimestamp, 
+	        #{reviewAttachmentNo} )
+	</insert>
+
+	<!-- 조회 -->
+	<select id="listByRestaurant" resultType="ReviewDto">
+	select 
+	review_no, review_content, review_rating, restaurant_id, member_id, review_created_at, review_updated_at, review_attachment_no
+	from review
+	where restaurant_id = #{restaurantId}
+	order by review_created_at desc
+	</select>
+	<select id="listByUser" resultType="ReviewAdminVO">
+	SELECT 
+        R.review_no, 
+        R.review_content, 
+        R.review_rating, 
+        R.restaurant_id, 
+        R.member_id, 
+        R.review_created_at, 
+        R.review_updated_at, 
+        R.review_attachment_no,
+        T.restaurant_name,      
+        0 AS report_count       
+    FROM review R
+    INNER JOIN restaurant T ON R.restaurant_id = T.restaurant_id
+    WHERE R.member_id = #{memberId}
+    ORDER BY R.review_created_at DESC
+	</select>
+	
+
+	<!-- 상세 -->
+	<select id="detail" resultType="ReviewDto">
+	select 
+	review_no, review_content, review_rating, restaurant_id, member_id, review_created_at, review_updated_at, review_attachment_no
+	FROM review
+	WHERE review_no = #{reviewNo}
+	</select>
+	
+	<!-- 수정 -->
+	<update id="update">
+	update review
+	set review_content = #{reviewContent}, review_rating = #{reviewRating}, review_updated_at = systimestamp, review_attachment_no = #{reviewAttachmentNo}
+	where review_no = #{reviewNo} AND member_id = #{memberId}
+	</update>
+	
+	<!-- 삭제 -->
+	<delete id="delete">
+	delete from review where review_no = #{reviewNo}
+	</delete>
+	
+	<select id="reviewAvg" resultType="ReviewListVO">
+		select * from restaurant_review_list where restaurant_id = #{restaurantId}
+	</select>
+	
+	<!-- 관리자용 리뷰조회 -->
+	<select id="selectListAdmin" resultType="ReviewAdminVO">
+	    SELECT
+	        R.review_no,                
+	        R.restaurant_id,
+	        R.member_id,
+	        R.review_content,
+	        R.review_rating,
+	        R.review_created_at,        
+	        R.review_updated_at,        
+	        R.review_attachment_no,     
+	        
+	        T.restaurant_name,          
+	        0 AS report_count         
+	
+	    FROM review R
+	    INNER JOIN restaurant T ON R.restaurant_id = T.restaurant_id
+	    ORDER BY R.review_no DESC
+	</select>
+
+</mapper>

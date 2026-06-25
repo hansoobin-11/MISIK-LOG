@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="memberProfile">
+  
+  	<insert id="insertAttachment" parameterType="com.milky.misiklog.vo.MemberProfileVO">
+		<selectKey keyProperty="attachmentNo" resultType="long" order="BEFORE">
+			select attachment_seq.nextval from dual
+		</selectKey>
+		insert into 
+		attachment (
+			attachment_no,
+			attachment_name,
+			attachment_type
+		) 
+		values (
+			#{attachmentNo},
+			#{attachmentName},
+			#{attachmentType}
+		)
+  	</insert>
+  	
+  	<insert id="insertMemberProfile" parameterType="com.milky.misiklog.vo.MemberProfileVO">
+  		insert into member_profile (
+  			member_id,
+  			attachmentNo
+  		) values (
+  			#{memberId}, 
+  			#{attachmentNo}
+  		)
+  	</insert>
+  	
+  	<update id="updateAndInsertMemberProfile" parameterType="com.milky.misiklog.vo.MemberProfileVO">
+  		merge into member_profile p
+  		using dual
+  		on (p.member_id = #{memberId})
+  		when matched then
+  			update set p.attachment_no=#{attachmentNo}
+  		when not matched then
+  			insert (member_id, attachment_no)
+  			values (#{memberId}, #{attachmentNo})
+  	</update>
+  	
+  
+<!-- 	<select id="selectAttachmentNoByMemberId"  parameterType="com.milky.misiklog.vo.MemberProfileVO"> -->
+<!-- 		select -->
+<!-- 			p.member_id, -->
+<!-- 			p.attachment_no, -->
+<!-- 			a.origin_name as profileName, a.file_path as profileLink from -->
+<!-- 			member_profile p -->
+<!-- 		join -->
+<!-- 			attachment a on p.attachment_no = a.attachment_no -->
+<!-- 		where -->
+<!-- 			p.member_id = #{memberId} -->
+<!-- 	</select> -->
+	
+	
+	<select id="selectAttachmentNoByMemberId" 
+        parameterType="com.milky.misiklog.vo.MemberProfileVO" 
+        resultType="com.milky.misiklog.vo.MemberProfileVO">
+    SELECT
+        p.member_id AS memberId,
+        a.attachment_no AS attachmentNo,
+        a.attachment_name AS attachmentName, 
+        a.attachment_type AS attachmentType 
+    FROM
+        member_profile p
+    JOIN
+        attachment a ON p.attachment_no = a.attachment_no
+    WHERE
+        p.member_id = #{memberId}
+</select>
+	
+	<delete id="deleteByMemberId" parameterType="string">
+		delete from member_profile
+		where member_id = #{memberId}
+	</delete>
+  
+  	
+  
+  
+</mapper>

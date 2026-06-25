@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="reservation">
+  	<!-- 시퀀스 생성 -->
+  	<select id="sequence" resultType="long">
+  		select reservation_seq.nextval from dual
+  	</select>
+  	
+  	<!-- 중복 체크 -->
+  	<select id="checkSlot" resultType="int">
+  		select count(*) from reservation 
+  		where reservation_target = #{reservationTarget} 
+  		and reservation_seat = #{reservationSeat} 
+  		and reservation_time = #{reservationTime}
+  		and reservation_status = '예약완료'
+  	</select>
+  	
+  	<!-- 예약 등록 -->
+  	<insert id="insert">
+  		insert into reservation(
+  		reservation_id, reservation_member, 
+  		reservation_target, reservation_people_count,
+  		reservation_status, reservation_time, 
+  		reservation_seat, reservation_request_note, 
+  		reservation_purpose
+  		) 
+  		values(
+  		#{reservationId}, #{reservationMember},
+  		#{reservationTarget}, #{reservationPeopleCount}, 
+  		'예약완료', #{reservationTime}, #{reservationSeat}, 
+  		#{reservationRequestNote}, #{reservationPurpose}
+  		)
+  	</insert>
+  	
+  	<select id="detail" resultType="ReservationDto">
+  		select * from reservation 
+  		where reservation_id = #{reservationId}
+  	</select>
+  	
+  	<!-- 예약 완료 후 상세 조회-->
+  	<select id="detailVO" resultType="ReservationDetailVO">
+		  	SELECT 
+	        R.reservation_id, 
+	        R.reservation_member,
+	        R.reservation_target,
+	        R.reservation_seat,
+	        R.reservation_time, 
+	        R.reservation_people_count,
+	        R.reservation_status,
+	        R.reservation_request_note,
+	        R.reservation_purpose,
+	        RT.restaurant_name, 
+	        RT.restaurant_address,
+	        RT.restaurant_contact,
+	        P.payment_total AS paymentTotalAmount,
+	        P.payment_refund AS refundAmount
+	         FROM reservation R
+	    JOIN restaurant RT ON R.reservation_target = RT.restaurant_id
+	    LEFT JOIN payment P ON R.reservation_id = P.reservation_id
+	    WHERE R.reservation_id = #{reservationId}
+  	</select>
+  	
+  	<!-- 멤버 별 예약내역 조회 -->
+  	<select id="listByMember" resultType="ReservationDetailVO">
+    	SELECT 
+            R.reservation_id, R.reservation_member, R.reservation_time, 
+            R.reservation_people_count, R.reservation_status,
+            RT.restaurant_name, RT.restaurant_address,
+            P.payment_total AS paymentTotalAmount,
+            P.payment_tid AS tid,
+            P.payment_time AS paymentTime,
+            P.payment_refund AS refundAmount
+        FROM reservation R
+        JOIN restaurant RT ON R.reservation_target = RT.restaurant_id
+        LEFT JOIN payment P ON R.reservation_id = P.reservation_id
+        WHERE R.reservation_member = #{memberId}
+        ORDER BY 
+    CASE WHEN reservation_status = '예약완료' THEN 1 ELSE 2 END ASC,
+    reservation_time DESC
+	</select>
+	
+	<select id="listByOwner" resultType="ReservationDetailVO">
+		SELECT 
+        RS.RESERVATION_ID, 
+        RS.RESERVATION_MEMBER, 
+        RS.RESERVATION_TARGET, 
+        RS.RESERVATION_SEAT, 
+        RS.RESERVATION_TIME, 
+        RS.RESERVATION_PEOPLE_COUNT, 
+        RS.RESERVATION_STATUS, 
+        RS.RESERVATION_REQUEST_NOTE, 
+        RS.RESERVATION_PURPOSE,
+        RT.RESTAURANT_NAME, 
+        RT.RESTAURANT_ADDRESS, 
+        RT.RESTAURANT_CONTACT,
+        P.PAYMENT_TOTAL AS paymentTotalAmount,
+        P.PAYMENT_REFUND AS refundAmount,
+        P.PAYMENT_TID AS tid,
+        P.PAYMENT_TIME AS paymentTime
+    FROM RESERVATION RS
+    JOIN RESTAURANT RT ON RS.RESERVATION_TARGET = RT.RESTAURANT_ID
+    LEFT OUTER JOIN PAYMENT P ON RS.RESERVATION_ID = P.RESERVATION_ID
+    WHERE RT.OWNER_ID = #{ownerId}
+    ORDER BY RS.RESERVATION_TIME ASC
+	</select>
+	
+	<update id="updateStatus">
+	update reservation set reservation_status = #{status} where reservation_id = #{reservationId}
+	</update>
+	
+	<select id="getOwnerId" resultType="string">
+		SELECT T2.OWNER_ID 
+	    FROM RESERVATION T1
+	    JOIN RESTAURANT T2 ON T1.RESERVATION_TARGET = T2.RESTAURANT_ID
+	    WHERE T1.RESERVATION_ID = #{reservationId}
+	</select>
+  	
+</mapper>

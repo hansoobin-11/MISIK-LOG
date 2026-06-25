@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="attachment">
+
+    <!-- 시퀀스 -->
+    <select id="sequence" resultType="int">
+        SELECT attachment_seq.NEXTVAL FROM dual
+    </select>
+
+    <!-- C: insert -->
+    <insert id="insert">
+        INSERT INTO attachment(
+            attachment_no,
+            attachment_name,
+            attachment_type,
+            attachment_size
+        ) VALUES (
+            #{attachmentNo},
+            #{attachmentName},
+            #{attachmentType},
+            #{attachmentSize}
+        )
+    </insert>
+
+    <!-- R: selectOne -->
+    <select id="selectOne" resultType="AttachmentDto">
+        SELECT 
+            attachment_no as attachmentNo,
+            attachment_name as attachmentName,
+            attachment_type as attachmentType,
+            attachment_size as attachmentSize
+        FROM attachment
+        WHERE attachment_no = #{attachmentNo}
+    </select>
+
+    <!-- D: 삭제 -->
+    <delete id="delete">
+        DELETE FROM attachment WHERE attachment_no = #{attachmentNo}
+    </delete>
+
+</mapper>

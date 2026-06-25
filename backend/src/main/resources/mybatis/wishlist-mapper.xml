@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="wishlist">
+
+	<insert id="insert">
+		insert into wishlist (member_id, restaurant_id)
+		values (#{memberId},
+		#{restaurantId})
+	</insert>
+
+	<delete id="delete">
+		delete from wishlist
+		where member_id = #{memberId} and
+		restaurant_id = #{restaurantId}
+	</delete>
+
+	<select id="check" resultType="int">
+		select count(*) from wishlist
+		where member_id = #{memberId} and restaurant_id = #{restaurantId}
+	</select>
+	
+	<select id="countByMember" resultType="int">
+		select count(*) from
+		wishlist
+		where member_id = #{memberId}
+	</select>
+	
+	<select id="countByRestaurantId" resultType="int">
+		select count(*) from wishlist where restaurant_id = #{restaurantId}
+	</select>
+
+	<select id="selectList" resultType="RestaurantDto">
+		SELECT R.* FROM restaurant R
+		INNER JOIN wishlist W ON R.restaurant_id = W.restaurant_id
+		WHERE W.member_id = #{memberId}
+		ORDER BY R.restaurant_id DESC
+	</select>
+
+</mapper>

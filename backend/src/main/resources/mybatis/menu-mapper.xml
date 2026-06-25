@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="menu">
+
+    <select id="sequence" resultType="long">
+        select menu_seq.nextval from dual
+    </select>
+
+    <!-- 메뉴 등록 -->
+    <insert id="insert" parameterType="MenuDto">
+        insert into menu (
+            menu_id,
+            restaurant_id,
+            menu_name,
+            menu_price,
+            menu_info
+        ) values (
+            menu_seq.nextval,
+            #{restaurantId},
+            #{menuName},
+            #{menuPrice},
+            #{menuInfo}
+        )
+    </insert>
+
+    <!-- 메뉴 조회 -->
+    <select id="detail" parameterType="long" resultType="MenuDto">
+        select
+            menu_id as menuId,
+            restaurant_id as restaurantId,
+            menu_name as menuName,
+            menu_price as menuPrice,
+            menu_info as menuInfo
+        from menu
+        where menu_id = #{menuId}
+    </select>
+
+    <!-- 식당별 메뉴 목록 -->
+    <select id="list" parameterType="long" resultType="MenuDto">
+        select
+            menu_id       as menuId,
+            restaurant_id as restaurantId,
+            menu_name     as menuName,
+            menu_price    as menuPrice,
+            menu_info     as menuInfo
+        from menu
+        where restaurant_id = #{restaurantId}
+        order by menu_id asc
+    </select>
+
+    <!-- 메뉴 수정 -->
+    <update id="update" parameterType="MenuDto">
+        update menu
+        set
+            menu_name  = #{menuName},
+            menu_price = #{menuPrice},
+            menu_info  = #{menuInfo}
+        where menu_id = #{menuId}
+    </update>
+
+    <!-- 메뉴 삭제 -->
+    <delete id="delete" parameterType="long">
+        delete from menu
+        where menu_id = #{menuId}
+    </delete>
+
+</mapper>

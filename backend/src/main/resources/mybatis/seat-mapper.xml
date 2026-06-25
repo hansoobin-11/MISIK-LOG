@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="seat">
+  <!-- 시퀀스 생성 -->
+    <select id="sequence" resultType="long">
+        select seat_seq.nextval from dual
+    </select>
+  <!-- 등록 -->
+  <insert id="insert">
+  	insert into seat(
+  	seat_id, seat_restaurant_id, seat_type, 
+  	seat_max_people
+  	) 
+  	values(
+  	#{seatId}, #{seatRestaurantId}, #{seatType}, 
+  	#{seatMaxPeople}
+  	)
+  </insert>
+  
+  <!-- 식당에 있는 좌석 전체 조회 -->
+  <select id="list" resultType="SeatDto">
+  	select * from seat
+  	where seat_restaurant_id = #{seatRestaurantId} 
+  	order by seat_id desc
+  </select>
+  
+  <!-- 상세 조회 -->
+  <select id="detail" resultType="SeatDto">
+  	select * from seat where seat_id = #{seatId}
+  </select>
+  
+  <!-- 식당 좌석 조회(예약 여부 포함) -->
+  <select id="listWithReservation" resultType="SlotListVO">
+  	select * from slot_list where restaurant_id = #{seatRestaurantId}
+  </select>
+  
+  <select id="availableSeatType" resultType="SeatDto">
+		SELECT s.seat_id,
+	       s.seat_restaurant_id,
+	       s.seat_type,
+	       s.seat_max_people
+	FROM seat s
+	WHERE s.seat_restaurant_id = #{restaurantId}
+	  AND s.seat_max_people >= #{peopleCount}
+	  AND NOT EXISTS (
+	      SELECT 1
+	      FROM reservation rs
+	      WHERE rs.reservation_seat = s.seat_id
+	        AND rs.reservation_status = '예약완료'
+	        AND TO_CHAR(rs.reservation_time, 'YYYY-MM-dd HH24:MI') = #{slotTime}
+	  )
+	  AND NOT EXISTS (
+      SELECT 1
+      FROM slot_lock sl
+      WHERE sl.seat_id = s.seat_id
+        AND sl.slot_expired_at > SYSTIMESTAMP
+  	 )
+  </select>
+ 
+  <!-- 삭제 -->
+  <delete id="delete" parameterType="long">
+    	delete from seat
+    	where seat_id = #{seatId}
+	</delete>
+
+</mapper>

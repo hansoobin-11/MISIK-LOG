@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="place">
+
+    <select id="sequence" resultType="long">
+        select place_seq.nextval from dual
+    </select>
+
+    <insert id="insert">
+        insert into place(
+            place_id, 
+            place_depth1, 
+            place_depth2, 
+            place_depth3
+        )
+        values(
+            #{placeId},
+            #{placeDepth1},
+            #{placeDepth2},
+            #{placeDepth3}
+        )
+    </insert>
+
+    <select id="selectByDepth" resultType="placeDto">
+        select *
+        from place
+        where place_depth1 = #{depth1}
+        and place_depth2 = #{depth2}
+        and place_depth3 = #{depth3}
+    </select>
+
+
+    <!-- 상위지역 목록 -->
+    <select id="upperPlaceList" resultType="java.lang.String">
+        select distinct place_depth1
+        from place
+        order BY place_depth1 ASC
+    </select>
+
+    <!-- 하위지역 목록 -->
+    <select id="lowerPlaceList" parameterType="java.lang.String" resultType="java.lang.String">
+        select distinct place_depth2
+   		from place
+    	where place_depth1 = #{value}
+    	order by place_depth2 ASC
+</select>
+    
+    <!-- 식당 Id로 place 조회 -->
+    <select id="selectPlaceByRestaurantId" resultType="placeDto">
+        select
+            place.place_id as placeId,
+            place.place_depth1 as placeDepth1,
+            place.place_depth2 as placeDepth2,
+            place.place_depth3 as placeDepth3
+        from place 
+        join restaurant 
+          on restaurant.restaurant_place = place.place_id
+        where restaurant.restaurant_id = #{restaurantId}
+    </select>
+    
+    <select id="selectDepth1RepresentativeList" resultType="PlaceDto">
+    select min(place_id) as placeId,
+      place_depth1 as placeDepth1
+    from place
+    group by place_depth1
+    order by place_depth1 asc
+	</select>
+    
+    <!-- 이미지 등록 -->
+    <insert id="insertPlaceImage">
+        insert into place_image (place_id, attachment_no)
+        values (#{placeId}, #{attachmentNo})
+    </insert>
+
+	<select id="selectOne" parameterType="long" resultType="PlaceDto">
+    	select * from place
+    	where place_id = #{placeId}
+	</select>
+	
+	<!-- 이미지 삭제 -->
+    <delete id="deletePlaceImageByPlaceId">
+        delete from place_image
+        where place_id = #{placeId}
+    </delete>
+	
+	<!-- 지역 이미지 attachmentNo 조회 -->
+	<select id="selectPlaceImageAttachmentNo" parameterType="long" resultType="int">
+    	select attachment_no
+    	from place_image
+    	where place_id = #{placeId}
+	</select>
+	
+	<!-- 홈/관리자용 지역 이미지 목록 -->
+	<select id="selectDepth1WithImage" resultType="PlaceImageVO">
+		select
+			place.place_id as placeId,
+    		place.place_depth1 as placeDepth1,
+    		place_image.attachment_no as attachmentNo
+		from place
+		left join place_image
+    		on place.place_id = place_image.place_id
+		where place.place_id in (
+    		select min(place_id)
+    	from place
+    	group by place_depth1
+		)
+		order by place.place_depth1 asc
+	</select>
+
+</mapper>
+

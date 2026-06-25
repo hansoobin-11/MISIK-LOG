@@ -1,0 +1,82 @@
+.place-btn {
+    padding: 10px 18px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+}
+
+.place-btn.active {
+    background: #007bff;
+    color: white;
+}
+
+.place-sub-btn {
+    padding: 6px 14px;
+    border-radius: 16px;
+    border: 1px solid #ccc;
+    background: #f8f8f8;
+    cursor: pointer;
+    font-size: 14px;
+}
+.category-card {
+    width: 130px;           
+    text-align: center;
+}
+
+.category-card:hover {
+    filter: brightness(0.8);
+}
+
+.category-image {
+    width: 100%;
+    height: 120px;           
+    object-fit: cover;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+.category-name {
+    margin-top: 10px;
+    font-weight: 700;       
+    font-size: 16px;        
+}
+.category-section {
+    margin-top: 40px;   
+}
+
+.place-card-container {
+    display: grid;
+    /* 자동조정 */
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); 
+    gap: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.place-card {
+    cursor: pointer;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+    background: #fff;
+}
+
+.place-card:hover {
+    filter: brightness(0.8);
+}
+
+.place-card img {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+}
+
+.place-card-title {
+    padding: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+}

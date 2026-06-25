@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="placeGroupMapping">
+  <insert id="insert">
+  	insert into place_group_mapping(
+  		place_group_id, place_id
+  	) 
+  	values(
+  		#{placeGroupId}, #{placeId}
+  	)
+  </insert>
+  
+  <select id="selectByMapping" resultType="int">
+  	select count(*) from place_group_mapping 
+  	where place_id = #{placeId} 
+  	and place_group_id = #{placeGroupId}
+  </select>
+</mapper>

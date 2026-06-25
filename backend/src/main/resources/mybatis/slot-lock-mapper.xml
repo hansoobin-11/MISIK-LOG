@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="slotLock">
+  <select id="sequence" resultType="long">
+  	select slot_lock_seq.nextval from dual
+  </select>
+  <insert id="addLock">
+  	insert into slot_lock (
+  		slot_lock_id, seat_id, 
+  		slot_locked_by, slot_lock_time
+  	) 
+  	values (
+  		#{slotLockId}, #{seatId}, 
+  		#{slotLockedBy}, #{slotLockTime} 
+  	)
+  </insert>
+  <!-- 락 삭제 -->
+  <delete id="delete">
+  	delete from slot_lock 
+  	where slot_lock_id = #{slotLockId}
+  </delete>
+  
+  <select id="detail" resultType="slotLockDto">
+  	select * from slot_lock where slot_lock_id = #{slotLockId}
+  </select>
+  
+  <select id="checkId" resultType="string">
+  	select slot_locked_by from slot_lock where seat_id = #{seatId} and slot_lock_time = #{reservationTime}
+  </select>
+  <select id="idByReservation" resultType="long">
+  	select slot_lock_id from slot_lock where seat_id = #{seatId} and slot_lock_time = #{reservationTime}
+  </select>
+  
+  <select id="endLockList" resultType="slotLockDto">
+  	select * from slot_lock where slot_expired_at > systimestamp
+  </select>
+  
+</mapper>
